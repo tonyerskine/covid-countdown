@@ -92,8 +92,9 @@ function start(countryName) {
 
     let current = countryData[countryData.length - 1]
     predictionInterval = window.setInterval(() => {
-        if (i < countryData.length || current.confirmed >= population[countryName]) return
+        if (i < countryData.length || current.confirmed >= population[countryName] || recoveryRateCount == 0 || deathRateCount == 0 || growthRateCount == 0) return
 
+        console.log(`current:`, current)
         console.log(`date: `, date)
         date.setDate(date.getDate() + 1)
         $('#date').html(date.toDateString())
