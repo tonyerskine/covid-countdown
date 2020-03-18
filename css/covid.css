@@ -1,0 +1,15 @@
+.healthy {
+    color: #4caeef;
+}
+
+.infected {
+    color: #8a0303;
+}
+
+.recovered {
+    color: #c37d7d;
+}
+
+.dead {
+    color: #222222;
+}
