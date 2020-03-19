@@ -42,18 +42,24 @@
 <div id="infected-count">
     Active Cases <i class="fas fa-male infected fa-2x"></i>
     <span id="infected-count-span"></span>
-    <span id="growth-rate-span"></span>
+    <span id="growth-rate-span" hidden></span>
 </div>
 <div id="recovered-count">
     Recovered <i class="fas fa-male recovered fa-2x"></i>
     <span id="recovered-count-span"></span>
-    <span id="recovered-rate-span"></span>
+    <span id="recovered-rate-span" hidden></span>
 </div>
 <div id="dead-count">
     Dead <i class="fas fa-male dead fa-2x"></i>
     <span id="dead-count-span"></span>
-    <span id="mortality-rate-span"></span>
+    <span id="mortality-rate-span" hidden></span>
 </div>
+
+<div id="scale-div" style="display: none"><i class="fas fa-male neutral fa-2x"></i> = <span id="scale-span"></span> people</div>
+<div id="people-div"></div>
+
+
+<!-- scripts -->
 <script src="js/vendor/modernizr-3.8.0.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.4.1.min.js"
         integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>

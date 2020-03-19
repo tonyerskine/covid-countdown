@@ -1,6 +1,8 @@
 var historyInterval
 var predictionInterval
-var timeout = 100;
+var timeout = 500;
+var totalPeople = 0
+var peopleScale = 500000
 
 function percent(part, whole) {
     if (whole == null || whole === undefined || whole == 0)
@@ -13,9 +15,15 @@ function change(a, b) {
     return (n < 0 ? "" : "+") + n
 }
 
-function displayHealthy(countryName, current) {
+function getHealthyCount(countryName, current) {
     let healhyCount = Math.max(population[countryName] - current.confirmed - current.deaths - current.recovered, 0)
+    return healhyCount;
+}
+
+function displayHealthy(countryName, current) {
+    let healhyCount = getHealthyCount(countryName, current);
     $('#healthy-count-span').html(healhyCount.toLocaleString())
+    drawPeople(healhyCount, 'healthy', countryName)
 }
 
 function start(countryName) {
@@ -47,13 +55,12 @@ function start(countryName) {
         }
 
         let current = countryData[i];
+        $('#people-div').html('')
+        totalPeople = 0
 
         //set date
         date = new Date(current.date);
         $('#date').html(date.toDateString())
-
-        //healthy
-        displayHealthy(countryName, current);
 
         //infected
         let infectedCount = current.confirmed - current.recovered - current.deaths
@@ -87,27 +94,37 @@ function start(countryName) {
             deathRateCount++
         }
 
+        drawPeople(deadCount, 'dead', countryName)
+        drawPeople(infectedCount, 'infected', countryName)
+        drawPeople(current.recovered, 'recovered', countryName)
+        displayHealthy(countryName, current, countryName);
+
         i++
     }, timeout)
 
     let current = countryData[countryData.length - 1]
+    let minNewRecovered = 0
     predictionInterval = window.setInterval(() => {
-        if (i < countryData.length || current.confirmed >= population[countryName] || recoveryRateCount == 0 || deathRateCount == 0 || growthRateCount == 0) return
+        if (i < countryData.length || (current.deaths + current.recovered) >= population[countryName] || recoveryRateCount == 0 || deathRateCount == 0 || growthRateCount == 0) return
 
         console.log(`current:`, current)
         console.log(`date: `, date)
         date.setDate(date.getDate() + 1)
         $('#date').html(date.toDateString())
-
-        let avgGrowthRate = growthRateSum / growthRateCount
-        let avgDeathRate = deathRateSum / deathRateCount
-        let avgRecoveryRate = recoveryRateSum / recoveryRateCount
-        console.log(`avgGrowthRate: ${avgGrowthRate}  - avgDeathRate: ${avgDeathRate}`)
+        $('#people-div').html('')
+        totalPeople = 0
 
         let yesterDayInfected = current.confirmed - current.deaths - current.recovered
+        if (current.confirmed >= population[countryName] && minNewRecovered == 0) {
+            minNewRecovered = Math.round(yesterDayInfected / 16 + 0.5)
+        }
+
+        let avgGrowthRate = growthRateSum / growthRateCount
+        let avgRecoveryRate = recoveryRateSum / recoveryRateCount
+        let avgDeathRate = avgRecoveryRate * 0.047
 
         let newDeaths = Math.round(yesterDayInfected * avgDeathRate);
-        let newRecovered = Math.round(yesterDayInfected * avgRecoveryRate);
+        let newRecovered = Math.max(Math.round(yesterDayInfected * avgRecoveryRate), Math.min(minNewRecovered, yesterDayInfected * (1 - avgDeathRate)));
         let newInfected = Math.round(yesterDayInfected * avgGrowthRate);
 
         current.deaths = current.deaths + newDeaths
@@ -115,7 +132,7 @@ function start(countryName) {
         current.confirmed = Math.min(current.confirmed + newInfected + newDeaths + newRecovered, population[countryName])
         current.infected = current.confirmed - current.recovered - current.deaths
 
-        displayHealthy(countryName, current)
+        $('#people-div').html('')
         $('#infected-count-span').html(current.infected.toLocaleString())
         $('#growth-rate-span').html(`(${change(0, newInfected)} ~ ${percent(growthRateSum, growthRateCount)})`)
         $('#recovered-count-span').html(current.recovered.toLocaleString())
@@ -123,6 +140,13 @@ function start(countryName) {
         let deadCount = current.deaths
         $('#dead-count-span').html(deadCount.toLocaleString())
         $('#mortality-rate-span').html(`(${percent(deadCount, (deadCount + current.recovered))})`)
+
+        drawPeople(deadCount, 'dead', countryName)
+        drawPeople(current.infected, 'infected', countryName)
+        drawPeople(current.recovered, 'recovered', countryName)
+        displayHealthy(countryName, current, countryName)
+
+        console.log(`totalPeople: ${(totalPeople * peopleScale).toLocaleString()}; currentTotal: ${(current.confirmed + getHealthyCount(countryName, current)).toLocaleString()}; population: ${population[countryName].toLocaleString()}`)
 
         i++
     }, timeout)
@@ -176,3 +200,19 @@ $('#country-select').change(() => {
 
     start(counrtySelected)
 })
+
+function drawPeople(count, type, countryName) {
+
+    $('#scale-span').html(peopleScale.toLocaleString())
+    $('#scale-div').show()
+
+    let people = Math.round(count / peopleScale)
+    for (let i = 0; i < people; i++) {
+        $('#people-div').append(`<i class="fas fa-male ${type} fa-2x"></i>`)
+        totalPeople++
+    }
+
+    if (type == 'healthy')
+        $('#scale-span').append(` - ${(totalPeople * peopleScale).toLocaleString()}`)
+
+}
